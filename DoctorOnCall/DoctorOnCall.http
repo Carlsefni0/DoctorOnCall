@@ -1,0 +1,6 @@
+@DoctorOnCall_HostAddress = http://localhost:5083
+
+GET {{DoctorOnCall_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
