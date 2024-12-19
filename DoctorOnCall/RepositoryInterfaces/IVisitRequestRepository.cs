@@ -4,13 +4,14 @@ namespace DoctorOnCall.RepositoryInterfaces;
 
 public interface IVisitRequestRepository
 {
-    Task<VisitRequestModel> AddVisitRequest(VisitRequestModel visitRequest);
+    Task<VisitRequest> CreateVisitRequest(VisitRequest visitRequest);
+    Task<ICollection<VisitRequest>> GetVisitRequestsByPatientId(int patientId, VisitRequestFilterDto filter);
+
+    Task<VisitRequest> GetVisitRequestById(int visitRequestId);
     
-    Task<VisitRequestModel> DeleteVisitRequest(int id);
-    Task<VisitRequestModel> GetVisitRequestById(int id);
+    Task<VisitRequest> UpdateVisitRequest(VisitRequest visitRequest);
     
-    Task<List<VisitRequestModel>> GetVisitRequestsByDate(DateTime date);
-    Task<List<VisitRequestModel>> GetVisitRequestsByPatientId(int patientId);
-    
-    Task<List<VisitRequestModel>> GetAllVisitRequests();
+
+
+
 }
