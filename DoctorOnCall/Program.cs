@@ -1,29 +1,21 @@
 using DoctorOnCall;
-using DoctorOnCall.Repositories;
-using DoctorOnCall.RepositoryInterfaces;
-using DoctorOnCall.ServiceInterfaces;
-using DoctorOnCall.Services;
+using DoctorOnCall.Extensions;
+using DoctorOnCall.Models;
+using DoctorOnCall.Utils;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<DataContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
-builder.Services.AddTransient<IVisitRequestRepository, VisitRequestRepository>();
-builder.Services.AddTransient<IVisitRequestsService, VisitRequestsService>();
-
+builder.Services.AddApplicationService(builder.Configuration);
+builder.Services.AddIdentityService(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -32,8 +24,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:5173"));
+
+app.UseAuthentication();
 app.UseAuthorization();
 
+
+app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 
 app.Run();
