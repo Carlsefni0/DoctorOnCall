@@ -1,15 +1,17 @@
-﻿using DoctorOnCall.Models;
+﻿using DoctorOnCall.DTOs;
+using DoctorOnCall.Models;
 
 namespace DoctorOnCall.RepositoryInterfaces;
 
 public interface IDoctorRepository
 {
-    Task<DoctorModel> AddDoctor(DoctorModel doctor);
-    Task<DoctorModel> UpdateDoctor(DoctorModel doctor);
+    Task<Doctor> CreateDoctor(Doctor doctor);
+    Task<Doctor> UpdateDoctor(Doctor doctorData);
+   
+    Task<ICollection<Doctor>> GetDoctors(DoctorFilterDto filter);
+    Task<Doctor?> GetDoctorByUserId(int userId);
+
     
-    Task<DoctorModel> DeleteDoctor(int id);
-    Task<DoctorModel> GetDoctorById(int id);
-    
-    Task<List<DoctorModel>> GetAllDoctors();
+   
 
 }
