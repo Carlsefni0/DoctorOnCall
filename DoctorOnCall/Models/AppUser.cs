@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DoctorOnCall.Enums;
 using Microsoft.AspNetCore.Identity;
 
 namespace DoctorOnCall.Models;
@@ -19,10 +20,7 @@ public class AppUser: IdentityUser<int>
 
     public ICollection<AppUserRole> UserRoles { get; set; } = [];
 
+
 }
 
-public enum Gender
-{
-    Male,
-    Female,
-}
+
