@@ -4,7 +4,8 @@ public enum VisitRequestStatus
 {
     Pending,       
     Approved,
+    Accepted,
     Rejected,
-    Scheduled,
-    Cancelled 
+    Cancelled, 
+    Completed
 }
