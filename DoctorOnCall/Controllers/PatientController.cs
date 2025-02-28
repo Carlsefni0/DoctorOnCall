@@ -1,74 +1,69 @@
-﻿using System.Security.Claims;
-using DoctorOnCall.DTOs.VisitDTOs;
-using DoctorOnCall.DTOs.VisitRequestDTOs;
-using DoctorOnCall.Enums;
-
+﻿using DoctorOnCall.DTOs;
+using DoctorOnCall.Models;
 using DoctorOnCall.RepositoryInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DoctorOnCall.Controllers;
 
+//TODO: Add Soft Delete
+
+[ServiceFilter(typeof(ValidateModelStateFilter))]
 [ApiController]
-[Authorize(Roles = "Patient")]
 [Route("api/patient")]
-public class PatientController: ControllerBase
+public class PatientController: BaseController
 {
-    private readonly IVisitService _visitService;
+    private readonly IPatientService _patientService;
+    private readonly IUserService _userService;
 
-    public PatientController(IVisitService visitRequestsService)
+    public PatientController(IPatientService patientService, IUserService userService)
     {
-        _visitService = visitRequestsService;
+        _patientService = patientService;
+        _userService = userService;
+    }   
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("register")]
+    public async Task<ActionResult<PatientDetailsDto>> CreatePatient(CreatePatientDto patientData)
+    {
+        var result = await _patientService.CreatePatient(patientData);
+        
+        return Ok(result);
     }
     
-    [HttpPost("create-visit-request")]
-    public async Task<ActionResult<VisitRequestDetailsDto>> CreateVisitRequest([FromBody]CreateVisitRequestDto createVisitRequest)
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{patientId}")]
+    public async Task<ActionResult<PatientDetailsDto>> EditPatient(int patientId, [FromBody] EditPatientDto patientData)
     {
-        if (!ModelState.IsValid) 
-            return BadRequest(ModelState);
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
-            throw new UnauthorizedAccessException("User ID not found in token");;
-        var createdVisitRequest = await _visitService.CreateVisitRequest(createVisitRequest, 1);
-
-        return Ok(createdVisitRequest);
-    }
-
-    [HttpGet("get-visit-requests")]
-    public async Task<ActionResult<ICollection<VisitRequestSummaryDto>>> GetMyVisitRequests([FromQuery] VisitRequestFilterDto filter)
-    {
-        //TODO: patient id is stored in accessToken;
+        var result = await _patientService.UpdatePatient(patientId, patientData);
         
-        int userId = 1;
-        var visitRequests = await _visitService.GetVisitRequestsByPatientId(userId,filter);
-        
-        return Ok(visitRequests);
-    }
-
-    [HttpGet("get-visit-request/{visitRequestId}")]
-    public async Task<ActionResult<VisitRequestDetailsDto>> GetVisitRequest(int visitRequestId)
-    {
-        int userId = 1;
-        var visitRequest = await _visitService.GetVisitRequestById(visitRequestId, userId);
-        
-        return Ok(visitRequest);
-    }
-
-    [HttpPatch("update-visit-request/{requestId}")]
-    public async Task<ActionResult<VisitRequestDetailsDto>> UpdateVisitRequest([FromBody] CreateVisitRequestDto updateVisitRequest, int requestId)
-    {
-        var visitRequest = await _visitService.EditVisitRequest(requestId, updateVisitRequest);
-        
-        return Ok(visitRequest);
-    }
-
-    [HttpPatch("cancel-visit-request/{requestId}")]
-    public async Task<IActionResult> CancelVisitRequest(int requestId)
-    {
-        await _visitService.ChangeVisitRequestStatus(requestId, VisitRequestStatus.Cancelled);
-        return Ok("Visit request cancelled successfully.");
+        return Ok(result);
     }
     
+    [Authorize(Roles = "Admin, Doctor")]
+    [HttpGet("{patientId}")]
+    public async Task<ActionResult<PatientDetailsDto>> GetPatient(int patientId)
+    {
+        var result = await _patientService.GetPatientById(patientId);
+        
+        return Ok(result);
+    }
+    
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    public async Task<ActionResult<PatientSummaryDto>> GetAllPatients([FromQuery] PatientFilterDto filter)
+    {
+        var result = await _patientService.GetPagedPatients(filter);
+        
+        return Ok(result);
+    }
 
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("{userId}")]
+    public async Task<IActionResult> DeletePatient(int userId)
+    {
+        await _userService.DeleteUser(userId);
+        
+        return Ok(new { message = "Patient deleted successfully" });
+    }
 }
