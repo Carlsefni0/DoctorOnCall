@@ -1,4 +1,4 @@
-﻿namespace DoctorOnCall.RepositoryInterfaces;
+﻿namespace DoctorOnCall.Services.Interfaces;
 
 public interface IEmailService
 {

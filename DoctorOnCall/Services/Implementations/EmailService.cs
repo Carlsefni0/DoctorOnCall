@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Net.Mail;
-using DoctorOnCall.RepositoryInterfaces;
+using DoctorOnCall.Services.Interfaces;
 
-namespace DoctorOnCall.Services;
+namespace DoctorOnCall.Services.Implementations;
 
 public class EmailService : IEmailService
 {
