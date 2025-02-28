@@ -11,14 +11,17 @@ public class Medicine
     [MaxLength(100)]
     public string Name { get; set; }
     
+    public string ImageUrl { get; set; }
+    
     [StringLength(500)]
     public string? Description { get; set; }
 
-    [Column(TypeName = "decimal(10,2)")]
-    public decimal? UnitPrice { get; set; }
+    public double UnitPrice { get; set; }
 
     [Required]
     [StringLength(50)]
     public string Dosage { get; set; }
+    
+    public ICollection<VisitRequestMedicine>? VisitRequestMedicines { get; set; } = new List<VisitRequestMedicine>();
     
 }
