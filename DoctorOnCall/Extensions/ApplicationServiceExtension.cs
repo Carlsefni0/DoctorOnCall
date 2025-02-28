@@ -1,7 +1,14 @@
-﻿using DoctorOnCall.Models;
+﻿using DoctorOnCall.AutoMappers;
+using DoctorOnCall.Models;
 using DoctorOnCall.Repositories;
+using DoctorOnCall.Repositories.Implementations;
+using DoctorOnCall.Repositories.Interfaces;
+using DoctorOnCall.Repository.Interfaces;
 using DoctorOnCall.RepositoryInterfaces;
+using DoctorOnCall.ServiceInterfaces;
 using DoctorOnCall.Services;
+using DoctorOnCall.Services.Implementations;
+using DoctorOnCall.Services.Interfaces;
 using DoctorOnCall.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -15,17 +22,30 @@ public static class ApplicationServiceExtension
 {
     public static IServiceCollection AddApplicationService(this IServiceCollection services, IConfiguration config)
     {
+        services.AddAutoMapper(cfg =>
+        {
+            cfg.AddProfile<PatientMappingProfile>();
+            cfg.AddProfile<DoctorMappingProfile>();
+            cfg.AddProfile<MedicineMappingProfile>();
+            cfg.AddProfile<VisitRequestMappingProfile>();
+            cfg.AddProfile<VisitMappingProfile>();
+            cfg.AddProfile<ScheduleMappingProfile>();
+            cfg.AddProfile<ScheduleExceptionMappingProfile>();
+        });
         services.AddControllers();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "DoctorOnCall API", Version = "v1" });
+
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
                 Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
+                Description = "Enter 'Bearer' [space] and then your token in the text input below.\nExample: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'"
             });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -39,45 +59,58 @@ public static class ApplicationServiceExtension
                             Id = "Bearer"
                         }
                     },
-                    new string[] { }
+                    Array.Empty<string>()
                 }
             });
         });
+        services.AddControllers(options =>
+        {
+            options.Filters.Add<ValidateModelStateFilter>();
+        });
+        
 
 
-        // DbContext
         services.AddDbContext<DataContext>(options =>
             options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
-        // Identity
         services.AddIdentity<AppUser, AppRole>()
             .AddEntityFrameworkStores<DataContext>()
             .AddDefaultTokenProviders();
 
         // Репозиторії
         services.AddScoped<IVisitRequestRepository, VisitRequestRepository>();
+        services.AddScoped<IVisitRepository, VisitRepository>();
         services.AddScoped<IDoctorRepository, DoctorRepository>();
         services.AddScoped<IPatientRepository, PatientRepository>();
-        services.AddScoped<IVisitRequestMedicineRepository, VisitRequestMedicineRepository>();
+        services.AddScoped<IMedicineRepository, MedicineRepository>();
+        services.AddScoped<IScheduleRepository, ScheduleRepository>();
+        services.AddScoped<IScheduleDayRepository, ScheduleDayRepository>();
+        services.AddScoped<IScheduleExceptionRepository, ScheduleExceptionRepository>();
+        services.AddScoped<HttpClient>();
 
         // Сервіси
+        services.AddScoped<IVisitRequestService, VisitRequestService>();
         services.AddScoped<IVisitService, VisitService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IDoctorService, DoctorService>();
         services.AddScoped<IPatientService, PatientService>();
         services.AddScoped<IMedicineService, MedicineService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IScheduleService, ScheduleService>();
+        services.AddScoped<IScheduleExceptionService, ScheduleExceptionService>();
+        services.AddScoped<IGoogleMapsService, GoogleMapsService>();
 
-        // EmailService як Singleton (якщо він не залежить від DbContext)
+        services.AddScoped<ValidateModelStateFilter>();
+
+      
         services.AddSingleton<IEmailService, EmailService>();
 
-        // TokenService як Singleton, якщо не залежить від DbContext
         services.AddScoped<ITokenService, TokenService>();
 
-        // ActionContextAccessor
+        services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
+        
         services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
-
-        // АвтоMapper
-        services.AddAutoMapper(typeof(AutoMapperProfiles));
 
         return services;
     }
