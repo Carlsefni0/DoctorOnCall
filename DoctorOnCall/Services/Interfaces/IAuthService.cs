@@ -3,7 +3,7 @@ using DoctorOnCall.DTOs.AuthDTOs;
 using DoctorOnCall.UtilClasses;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DoctorOnCall.RepositoryInterfaces;
+namespace DoctorOnCall.Services.Interfaces;
 
 public interface IAuthService
 {
