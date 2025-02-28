@@ -17,24 +17,20 @@ namespace DoctorOnCall.Services;
 
 public class VisitRequestService : IVisitRequestService
 {
-    private readonly IVisitRequestRepository _visitRequestRepository;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly IPatientRepository _patientRepository;
     private readonly IMapper _mapper;
-    private readonly IDoctorRepository _doctorRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public VisitRequestService(IVisitRequestRepository visitRequestRepository, UserManager<AppUser> userManager, IPatientRepository patientRepository, IMapper mapper,
-         IDoctorRepository doctorRepository)
+    public VisitRequestService(IMapper mapper, IUnitOfWork unitOfWork)
     {
-        _visitRequestRepository = visitRequestRepository;
-        _userManager = userManager;
-        _patientRepository = patientRepository;
+        
         _mapper = mapper;
-        _doctorRepository = doctorRepository;
+        _unitOfWork = unitOfWork;
     }
     public async Task<VisitRequestDetailsDto> CreateVisitRequest(CreateVisitRequestDto createVisitRequest, int userId)
     {
-        var patient = await _patientRepository.GetPatientByUserId(userId);
+        await _unitOfWork.BeginTransactionAsync();
+        
+        var patient = await _unitOfWork.Patients.GetPatientByUserId(userId);
 
         var visitDuration = GetVisitDuration(createVisitRequest.RequestType);
 
@@ -53,99 +49,105 @@ public class VisitRequestService : IVisitRequestService
             IsRegularVisit = createVisitRequest.IsRegularVisit,
             RegularVisitOccurrences = createVisitRequest.RegularVisitOccurrences,
             RegularVisitIntervalDays = createVisitRequest.RegularVisitIntervalDays,
-            RequestedMedicines = createVisitRequest.RequestedMedicines 
+            RequestedMedicines = createVisitRequest?.RequestedMedicines? 
                 .Select(m => new VisitRequestMedicine { MedicineId = m.Key, Quantity = m.Value })
                 .ToList()
         };
 
         if (createVisitRequest.IsRegularVisit) AssignVisitDates(visitRequest);
         
-        var createdVisitRequest = await _visitRequestRepository.CreateVisitRequest(visitRequest);
+        var createdVisitRequest = await _unitOfWork.VisitRequests.CreateVisitRequest(visitRequest);
+        
+        await _unitOfWork.CommitAsync();
         
         var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(createdVisitRequest);
 
         return mappedVisitRequest;
     }
     public async Task<VisitRequestDetailsDto> EditVisitRequest(int visitRequestId, int userId, EditVisitRequestDto editVisitRequest)
-{
-    var patient = await _patientRepository.GetPatientByUserId(userId);
-    var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
-
-    if (visitRequest.PatientId != patient.Id) 
-        throw new ForbiddenAccessException("You cannot edit this visit");
-
-    if (visitRequest.Status != VisitRequestStatus.Pending) 
-        throw new ValidationException("The visit request was processed. You can't edit it anymore.");
-
-    if (editVisitRequest.RequestedDateTime.HasValue)
     {
-        visitRequest.RequestedDateTime = editVisitRequest.RequestedDateTime.Value;
-        visitRequest.ExpectedEndDateTime = visitRequest.RequestedDateTime.Add(GetVisitDuration(visitRequest.Type));
-    }
+        await _unitOfWork.BeginTransactionAsync();
+        
+        var patient = await _unitOfWork.Patients.GetPatientByUserId(userId);
+        
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
 
-    if (!string.IsNullOrEmpty(editVisitRequest.RequestDescription)) visitRequest.RequestDescription = editVisitRequest.RequestDescription;
+        if (visitRequest.PatientId != patient.Id) 
+            throw new ForbiddenAccessException("You cannot edit this visit");
 
-    if (editVisitRequest.RequestedMedicines != null)
-    {
-        visitRequest.RequestedMedicines = editVisitRequest.RequestedMedicines
-            .Select(m => new VisitRequestMedicine
-            {
-                VisitRequestId = visitRequest.Id,
-                MedicineId = m.Key,
-                Quantity = m.Value
-            }).ToList();
-    }
+        if (visitRequest.Status != VisitRequestStatus.Pending) 
+            throw new ValidationException("The visit request was processed. You can't edit it anymore.");
 
-    if (visitRequest.IsRegularVisit && editVisitRequest.RegularVisitIntervalDays.HasValue && editVisitRequest.RegularVisitOccurrences.HasValue)
-    {
-        if (visitRequest.RegularVisitDates != null && visitRequest.RegularVisitDates.Any())
+        if (editVisitRequest.RequestedDateTime.HasValue)
         {
-            await _visitRequestRepository.RemoveRegularVisitDates(visitRequest.RegularVisitDates);
-            visitRequest.RegularVisitDates.Clear();
+            visitRequest.RequestedDateTime = editVisitRequest.RequestedDateTime.Value;
+            visitRequest.ExpectedEndDateTime = editVisitRequest.RequestedDateTime.Value.Add(GetVisitDuration(visitRequest.Type));
         }
 
-        visitRequest.RegularVisitIntervalDays = editVisitRequest.RegularVisitIntervalDays;
-        visitRequest.RegularVisitOccurrences = editVisitRequest.RegularVisitOccurrences;
-        
-        AssignVisitDates(visitRequest);
-    }
+        if (!string.IsNullOrEmpty(editVisitRequest.RequestDescription)) visitRequest.RequestDescription = editVisitRequest.RequestDescription;
 
-    var updatedVisitRequest = await _visitRequestRepository.UpdateVisitRequest(visitRequest);
-    return _mapper.Map<VisitRequestDetailsDto>(updatedVisitRequest);
-}
+        if (editVisitRequest.RequestedMedicines != null)
+        {
+            visitRequest.RequestedMedicines = editVisitRequest.RequestedMedicines
+                .Select(m => new VisitRequestMedicine
+                {
+                    VisitRequestId = visitRequest.Id,
+                    MedicineId = m.Key,
+                    Quantity = m.Value
+                }).ToList();
+        }
+
+        if (visitRequest.IsRegularVisit && editVisitRequest.RegularVisitIntervalDays.HasValue && editVisitRequest.RegularVisitOccurrences.HasValue)
+        {
+            if (visitRequest.RegularVisitDates != null && visitRequest.RegularVisitDates.Any())
+            {
+                await _unitOfWork.VisitRequests.RemoveRegularVisitDates(visitRequest.RegularVisitDates);
+                visitRequest.RegularVisitDates.Clear();
+            }
+
+            visitRequest.RegularVisitIntervalDays = editVisitRequest.RegularVisitIntervalDays;
+            visitRequest.RegularVisitOccurrences = editVisitRequest.RegularVisitOccurrences;
+            
+            AssignVisitDates(visitRequest);
+        }
+        
+        await _unitOfWork.CommitAsync();
+        
+        return _mapper.Map<VisitRequestDetailsDto>(visitRequest);
+    }
 
 
 
     public async Task<PagedResult<VisitRequestSummaryDto>> GetPagedVisitRequests(VisitRequestFilterDto filter, int userId)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _unitOfWork.UserManager.FindByIdAsync(userId.ToString());
         
         if(user == null) throw new NotFoundException($"The user with ID {userId} was not found");
         
-        var userRoles = await _userManager.GetRolesAsync(user);
+        var userRoles = await _unitOfWork.UserManager.GetRolesAsync(user);
 
         if (userRoles.Contains("Doctor"))
         {
-            var doctor = await _doctorRepository.GetDoctorByUserId(userId);
+            var doctor = await _unitOfWork.Doctors.GetDoctorByUserId(userId);
             filter.DoctorId = doctor.Id;
         }
         if (userRoles.Contains("Patient"))
         {
-            var patient = await _patientRepository.GetPatientByUserId(userId);
+            var patient = await _unitOfWork.Patients.GetPatientByUserId(userId);
             filter.PatientId = patient.Id;
         }
-        var pagedVisitRequests = await _visitRequestRepository.GetPagedVisitRequestsSummary(filter);
+        var pagedVisitRequests = await _unitOfWork.VisitRequests.GetPagedVisitRequestsSummary(filter);
         
         return pagedVisitRequests;
     }
 
     public async Task<ICollection<AssignedVisitRequestDto>> GetAssignedVisitRequests(DateTime dateRangeStart, DateTime dateRangeEnd, int userId)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _unitOfWork.UserManager.FindByIdAsync(userId.ToString());
         
         if(user == null) throw new NotFoundException($"The user with ID {userId} was not found");
         
-        var doctor = await _doctorRepository.GetDoctorByUserId(userId);
+        var doctor = await _unitOfWork.Doctors.GetDoctorByUserId(userId);
         
         var filter = new VisitRequestFilterDto
         {
@@ -154,13 +156,13 @@ public class VisitRequestService : IVisitRequestService
             DoctorId = doctor.Id
         };
         
-        var visitRequests = await _visitRequestRepository.GetAssignedVisitRequests(filter);
+        var visitRequests = await _unitOfWork.VisitRequests.GetAssignedVisitRequests(filter);
         
         return visitRequests;
     }
     public async Task<DailyVisitsDto> GetDailyVisitRequests(DateTime date, int userId)
     {
-        var doctor = await _doctorRepository.GetDoctorByUserId(userId);
+        var doctor = await  _unitOfWork.Doctors.GetDoctorByUserId(userId);
 
         var filter = new VisitRequestFilterDto()
         {
@@ -168,7 +170,7 @@ public class VisitRequestService : IVisitRequestService
             DoctorId = doctor.Id
         };
         
-        var visitRequests = await _visitRequestRepository.GetCurrentVisitRequests(filter);
+        var visitRequests = await _unitOfWork.VisitRequests.GetCurrentVisitRequests(filter);
         
         var mappedVisitRequests = _mapper.Map<ICollection<CurrentVisitRequestDto>>(visitRequests);
 
@@ -183,18 +185,17 @@ public class VisitRequestService : IVisitRequestService
 
     public async Task<VisitRequestDetailsDto> GetVisitRequestById(int visitRequestId, int userId)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _unitOfWork.UserManager.FindByIdAsync(userId.ToString());
         
         if(user == null) throw new NotFoundException($"The user with ID {userId} was not found");
         
-        var userRoles = await _userManager.GetRolesAsync(user);
+        var userRoles = await _unitOfWork.UserManager.GetRolesAsync(user);
         
-        var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
-
-
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
+        
         if (userRoles.Contains("Doctor"))
         {
-            var doctor = await _doctorRepository.GetDoctorByUserId(userId);
+            var doctor = await _unitOfWork.Doctors.GetDoctorByUserId(userId);
             bool isAssignedToDoctor = visitRequest.DoctorVisitRequests.Any(dvr => dvr.DoctorId == doctor.Id);
 
             if (!isAssignedToDoctor) throw new ForbiddenAccessException("This visit request is not assigned to you");
@@ -202,7 +203,7 @@ public class VisitRequestService : IVisitRequestService
 
         if (userRoles.Contains("Patient"))
         {
-            var patient = await _patientRepository.GetPatientByUserId(userId);
+            var patient = await _unitOfWork.Patients.GetPatientByUserId(userId);
             bool belongToPatient = visitRequest.PatientId == patient.Id;
             
             if(!belongToPatient) throw new ForbiddenAccessException("This visit request is not yours");
@@ -215,9 +216,11 @@ public class VisitRequestService : IVisitRequestService
 
     public async Task<VisitRequestDetailsDto> ApproveVisitRequest(int visitRequestId, int doctorId)
     {
-        var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
+        await _unitOfWork.BeginTransactionAsync();
+        
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
 
-        var doctor = await _doctorRepository.GetDoctorById(doctorId);
+        var doctor = await _unitOfWork.Doctors.GetDoctorById(doctorId);
         
         if(!visitRequest.IsRegularVisit) visitRequest.Status = VisitRequestStatus.Approved;
 
@@ -231,56 +234,58 @@ public class VisitRequestService : IVisitRequestService
         if (!visitRequest.IsRegularVisit) assignation.IsApprovedByDoctor = true;
         
         doctor.DoctorVisitRequests.Add(assignation);
+      
+        await _unitOfWork.CommitAsync();
         
-       _doctorRepository.UpdateDoctor(doctor);
-        
-        var updateVisitRequest = await _visitRequestRepository.UpdateVisitRequest(visitRequest);
-        
-        var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(updateVisitRequest);
+        var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(visitRequest);
         
         return mappedVisitRequest;
     }
     public async Task<VisitRequestDetailsDto> ApproveRegularVisitRequest(int visitRequestId, int userId)
     {
-        var doctor = await _doctorRepository.GetDoctorByUserId(userId);
+        await _unitOfWork.BeginTransactionAsync();
         
-        var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
+        var doctor = await _unitOfWork.Doctors.GetDoctorByUserId(userId);
+        
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
 
         var assignation = doctor.DoctorVisitRequests.FirstOrDefault(v => v.VisitRequestId == visitRequestId);
     
         if (assignation == null) throw new NotFoundException("Assignation not found");
 
         assignation.IsApprovedByDoctor = true;
-
-        await _visitRequestRepository.UpdateDoctorVisitRequest(assignation);
     
         visitRequest.Status = VisitRequestStatus.Approved;
     
-        _doctorRepository.UpdateDoctor(doctor);
-        
-        var updateVisitRequest = await _visitRequestRepository.UpdateVisitRequest(visitRequest);
+        await _unitOfWork.CommitAsync();
     
-        return _mapper.Map<VisitRequestDetailsDto>(updateVisitRequest);
+        var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(visitRequest);
+        
+        return mappedVisitRequest;
     }
 
     public async Task<VisitRequestDetailsDto> RejectVisitRequest(int visitRequestId, RejectVisitRequestDto rejectVisitRequest)
     {
-        var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
+        await _unitOfWork.BeginTransactionAsync();
+        
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
         
         visitRequest.Status = VisitRequestStatus.Rejected;
         visitRequest.RejectionReason = rejectVisitRequest.RejectionReason;
         
-        var updateVisitRequest = await _visitRequestRepository.UpdateVisitRequest(visitRequest);
+        await _unitOfWork.CommitAsync();
         
-        var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(updateVisitRequest);
+        var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(visitRequest);
         
         return mappedVisitRequest;
     }
     public async Task RejectRegularVisitRequest(int visitRequestId, int userId)
     {
-        var doctor = await _doctorRepository.GetDoctorByUserId(userId);
+        await _unitOfWork.BeginTransactionAsync();
         
-        var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
+        var doctor = await _unitOfWork.Doctors.GetDoctorByUserId(userId);
+        
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
         
         var assignation = visitRequest.DoctorVisitRequests.FirstOrDefault(v => v.DoctorId == doctor.Id);;
         
@@ -288,21 +293,24 @@ public class VisitRequestService : IVisitRequestService
 
         assignation.IsApprovedByDoctor = false;
         
-        await _visitRequestRepository.UpdateDoctorVisitRequest(assignation);
+        await _unitOfWork.CommitAsync();
+        
     }
     public async Task<VisitRequestDetailsDto> CancelVisitRequest(int visitRequestId, int userId)
     {
-        var patient = await _patientRepository.GetPatientByUserId(userId);
+        await _unitOfWork.BeginTransactionAsync();
+
+        var patient = await _unitOfWork.Patients.GetPatientByUserId(userId);
         
-        var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
         
         if(visitRequest.PatientId != patient.Id) throw new ForbiddenAccessException("This visit request is not yours");
         
         visitRequest.Status = VisitRequestStatus.Cancelled;
         
-        var updatedVisitRequest = await _visitRequestRepository.UpdateVisitRequest(visitRequest);
+        var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(patient);
         
-        var mappedVisitRequest = _mapper.Map<VisitRequestDetailsDto>(updatedVisitRequest);
+        await _unitOfWork.CommitAsync();
         
         return mappedVisitRequest;
     }

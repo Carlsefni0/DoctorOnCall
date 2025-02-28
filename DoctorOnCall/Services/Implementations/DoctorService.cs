@@ -13,33 +13,22 @@ using DoctorOnCall.Services.Interfaces;
 using DoctorOnCall.Utils;
 using Microsoft.AspNetCore.Identity;
 
-namespace DoctorOnCall.Services;
+namespace DoctorOnCall.Services.Implementations;
 
 public class DoctorService : IDoctorService
 {
-    private readonly IDoctorRepository _doctorRepository;
     private readonly IMapper _mapper;
     private readonly IUserService _userService;
-    private readonly UserManager<AppUser> _userManager;
     private readonly IGoogleMapsService _googleMapsService;
-    private readonly IVisitRequestRepository _visitRequestRepository;
     private readonly IScheduleService _scheduleService;
-    private readonly IScheduleRepository _scheduleRepository;
-    private readonly IScheduleExceptionRepository _scheduleExceptionRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public DoctorService(IDoctorRepository doctorRepository, IMapper mapper, IUserService userService, UserManager<AppUser> userManager, IGoogleMapsService googleMapsService,
-        IVisitRequestRepository visitRequestRepository,IScheduleService scheduleService, IScheduleRepository scheduleRepository, IScheduleExceptionRepository scheduleExceptionRepository, IUnitOfWork unitOfWork)
+    public DoctorService(IMapper mapper, IUserService userService, IGoogleMapsService googleMapsService, IScheduleService scheduleService, IUnitOfWork unitOfWork)
     {
-        _doctorRepository = doctorRepository;
         _mapper = mapper;
         _userService = userService;
-        _userManager = userManager;
         _googleMapsService = googleMapsService;
-        _visitRequestRepository = visitRequestRepository;
         _scheduleService = scheduleService;
-        _scheduleRepository = scheduleRepository;
-        _scheduleExceptionRepository = scheduleExceptionRepository;
         _unitOfWork = unitOfWork;
     }
     public async Task<DoctorDetailsDto> CreateDoctor(CreateDoctorDto doctorData)
@@ -72,7 +61,7 @@ public class DoctorService : IDoctorService
     {
         await _unitOfWork.BeginTransactionAsync();
         
-        var doctor = await _doctorRepository.GetDoctorById(doctorId, "User");
+        var doctor = await _unitOfWork.Doctors.GetDoctorById(doctorId, "User");
 
         if (!string.IsNullOrEmpty(doctorData.FirstName)) doctor.User.FirstName = doctorData.FirstName;
         if (!string.IsNullOrEmpty(doctorData.LastName)) doctor.User.LastName = doctorData.LastName;
@@ -85,11 +74,9 @@ public class DoctorService : IDoctorService
             doctor.Location = location;
         }
         
-        var updateDoctor = await _unitOfWork.Doctors.UpdateDoctor(doctor);
-        
         await _unitOfWork.CommitAsync();
         
-        var mappedDoctor = _mapper.Map<DoctorDetailsDto>(updateDoctor);
+        var mappedDoctor = _mapper.Map<DoctorDetailsDto>(doctor);
         
         return mappedDoctor;
     }
@@ -105,32 +92,29 @@ public class DoctorService : IDoctorService
 
     public async Task<PagedResult<DoctorSummaryDto>> GetPagedDoctors(DoctorFilterDto filter)
     {
-        var doctors = await _doctorRepository.GetPagedDoctors(filter);
+        var doctors = await _unitOfWork.Doctors.GetPagedDoctors(filter);
         
         return doctors;
     }
 
     public async Task<DoctorSummaryDto> GetDoctorAssignedToVisitRequest(int visitRequestId)
     {
-        var doctor = await _doctorRepository.GetDoctorAssignedToVisitRequest(visitRequestId);
+        var doctor = await _unitOfWork.Doctors.GetDoctorAssignedToVisitRequest(visitRequestId);
         
-        var mappedDoctor = _mapper.Map<DoctorSummaryDto>(doctor);
-        
-        return mappedDoctor;
+        return doctor;
     }
     
     public async Task<ICollection<DoctorSummaryDto>> GetDoctorsForVisitRequest(int visitRequestId, string mode)
     {
-        var visitRequest = await _visitRequestRepository.GetVisitRequestById(visitRequestId);
+        var visitRequest = await _unitOfWork.VisitRequests.GetVisitRequestById(visitRequestId);
 
-        var doctors = await _doctorRepository.GetAllDoctors(new DoctorFilterDto { Districts = new List<string> { visitRequest.District } });
-
-
+        var doctors = await _unitOfWork.Doctors.GetAllDoctors(new DoctorFilterDto { Districts = new List<string> { visitRequest.District } });
+        
         var availableDoctors = new List<Doctor>();
         
         foreach (var doctor in doctors)
         {
-            if (!await _scheduleExceptionRepository.DoctorHasScheduleException(doctor.Id, visitRequest.RequestedDateTime) && 
+            if (!await _unitOfWork.ScheduleExceptions.DoctorHasScheduleException(doctor.Id, visitRequest.RequestedDateTime) && 
                 !HasDoctorDeclinedRegularVisitRequest(visitRequest, doctor))
             {
                 availableDoctors.Add(doctor);
@@ -141,7 +125,7 @@ public class DoctorService : IDoctorService
 
         foreach (var doctor in availableDoctors)
         {
-            var nextWorkingDay = await _scheduleRepository.GetDoctorWorkingDayByDate(doctor.Id, visitRequest.RequestedDateTime);
+            var nextWorkingDay = await _unitOfWork.Schedules.GetDoctorWorkingDayByDate(doctor.Id, visitRequest.RequestedDateTime);
             if (nextWorkingDay == null) continue;
 
             DateTime startPointDateTime;
@@ -152,7 +136,7 @@ public class DoctorService : IDoctorService
                 DoctorId = doctor.Id,
                 Date = visitRequest.RequestedDateTime
             };
-            var doctorVisits = await _visitRequestRepository.GetVisitRequests(filter);
+            var doctorVisits = await _unitOfWork.VisitRequests.GetVisitRequests(filter);
 
             if (!doctorVisits.Any())
             {
@@ -189,12 +173,8 @@ public class DoctorService : IDoctorService
         var assignation =  visitRequest.DoctorVisitRequests
             .FirstOrDefault(doctorVisitRequest => doctorVisitRequest.DoctorId == doctor.Id);
 
-        if (assignation == null) return false;
+        if (assignation == null || assignation.IsApprovedByDoctor == null) return false;
 
-        return assignation.IsApprovedByDoctor == null ? false : true;
+        return assignation.IsApprovedByDoctor.Value ;
     }
-
-    
-    
-    
 }
