@@ -6,10 +6,13 @@ namespace DoctorOnCall.DTOs.VisitRequestDTOs;
 
 public class VisitRequestSummaryDto
 {
-    public int VisitRequestId { get; set; }
+    public int Id { get; set; }
     
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public VisitRequestStatus Status { get; set; }
+    
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public VisitRequestType Type { get; set; }
     
     public DateTime RequestedDateTime { get; set; }
     
