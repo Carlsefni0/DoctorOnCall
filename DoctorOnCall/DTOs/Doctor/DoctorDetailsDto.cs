@@ -14,16 +14,10 @@ public class DoctorDetailsDto
     public string PhoneNumber { get; set; }
     public string Specialization { get; set; }
     public string WorkingDistrict { get; set; }
-    
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public DoctorStatus Status { get; set; }
+    public string Hospital { get; set; }
     
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public Gender Gender { get; set; }
-    
-    // public ICollection<Visit>? Visits { get; set; }
-    // public ScheduleModel? Schedule { get; set; }
     public int UserId { get; set; }
     
-    // public ICollection<DoctorVisitRequest>? DoctorVisitRequests { get; set; }
 }

@@ -13,10 +13,8 @@ public class CreateDoctorDto : CreateUserDto
     [StringLength(100, MinimumLength = 2, ErrorMessage = "Working district must be between 2 and 100 characters.")]
     public string WorkingDistrict { get; set; }
     
-    [Required(ErrorMessage = "Status is required.")]
-    public DoctorStatus Status { get; set; }
+    [Required(ErrorMessage = "Hospital  is required.")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Address must be between 2 and 100 characters.")]
+    public string Hospital { get; set; }
     
-    [Required(ErrorMessage = "Schedule ID is required.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Schedule ID must be a positive number.")]
-    public int ScheduleId { get; set; }
 }
