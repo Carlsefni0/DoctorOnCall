@@ -1,0 +1,43 @@
+﻿.header {
+    display: flex;
+    width: 100%;
+    height: 4rem;
+    background: #088172;
+    border-top-right-radius: 1rem;
+    border-top-left-radius: 1rem;
+    position: relative;
+    flex-direction: column;
+    justify-content: end;
+}
+.return_btn {
+    position: absolute;
+    background-color: transparent;
+    border: none;
+    top: 0.1rem;
+    left: 1rem;
+    cursor: pointer;
+    img {
+        width: 2.5rem;
+    }
+
+}
+.visit_requests_list {
+    display: flex;
+    height: calc(100% - 8rem);
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1rem;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    li {
+        width: 90%;
+        display: flex;
+        justify-content: center;
+    }
+}
+
+.visit_requests_list::-webkit-scrollbar {
+    display: none;
+}
