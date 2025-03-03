@@ -1,0 +1,33 @@
+﻿.error_page_container {
+    width: 100%;
+    height: 100vh;
+    background-image: url("../assets/auth_background.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.error_message_wrapper {
+    display: flex;
+    width: 25%;
+    height: 30%;
+    background-color: rgb(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 0.5rem;
+    border: 1px solid white;
+    padding: 4rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    h1 {
+        color: #68baa9;
+        font-size: 2.5rem;
+        text-align: center;
+    }
+    p {
+        text-align: center;
+        font-size: 1.5rem;
+        color: #545454;
+    }
+}
