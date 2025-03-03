@@ -1,0 +1,61 @@
+﻿.medicine_option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    &:hover {
+        background-color: rgba(125, 214, 195, 0.12);
+    }
+}
+
+.medicine_container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    
+    max-height: 100%;
+    /*overflow-y: auto;*/
+    /*scrollbar-width: thin;*/
+    /*scrollbar-color: #eae5e5 #f9f9f9;*/
+}
+.medicine_item {
+    margin-top: 0.45rem;
+    width: 30%;
+    height: 3rem;
+    background-color: #f9f9f9;
+    border-radius: 0.5rem;
+    border: 1px solid lightgray;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.5rem;
+    gap: 0.5rem;
+    transition: 0.5s;
+    cursor: pointer;
+    img{
+        width: 2rem;
+        border-radius: 0.5rem;
+    }
+    &:hover {
+        background-color: rgba(125, 214, 195, 0.12);
+    }
+}
+.medicine_name {
+    font-size: 0.9rem;
+}
+.medicine_price {
+    font-weight: 300;
+    font-size: 0.9rem;
+}
+.medicine_quantity {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+    background-color: #fff;
+    border: 1px solid lightgray;
+    color: #c5c1c1;
+}

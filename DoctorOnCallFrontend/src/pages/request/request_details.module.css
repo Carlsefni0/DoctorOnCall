@@ -1,0 +1,80 @@
+﻿.header {
+    display: flex;
+    width: 100%;
+    height: 4rem;
+    background: #088172;
+    border-top-right-radius: 1rem;
+    border-top-left-radius: 1rem;
+    position: relative;
+    flex-direction: column;
+    justify-content: end;
+}
+.return_btn {
+    position: absolute;
+    background-color: transparent;
+    border: none;
+    top: 0.1rem;
+    left: 1rem;
+    cursor: pointer;
+    img {
+        width: 2.5rem;
+    }
+}
+.content {
+    padding: 1rem 2rem 4rem 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    flex-direction: column;
+    height:55vh;
+}
+.status {
+    padding: 6px 10px;
+    border-radius: 1rem;
+    font-size: 1rem;
+    border: 1px solid lightgray;
+    background-color: #f9f9f9;
+}
+.items_container__medicines, .items_container__doctors, .items_container__single {
+    height: calc(80vh - 8rem);
+    display: flex;
+    flex-wrap: wrap;
+    padding: 2rem;
+    gap: 2rem;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.items_container__doctors {
+    height: 45.75vh;
+    gap: 4.755rem
+}
+.items_container__single{
+    height: 45.75vh;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10rem;
+}
+
+.items_container__medicines::-webkit-scrollbar, .items_container__medicines::-webkit-scrollbar {
+    display: none; 
+}
+.message {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    color: #545454;
+}
+
+h2 {
+    margin: 0 auto;
+    font-size: 1.5rem;
+    color: #a1a0a0;
+    font-weight: 500;
+    width: 80%;
+    text-align: center;
+
+}

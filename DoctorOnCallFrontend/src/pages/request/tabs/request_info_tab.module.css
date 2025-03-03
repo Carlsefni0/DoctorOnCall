@@ -1,0 +1,62 @@
+﻿.property_wrapper, .property_wrapper__text {
+    display: flex;
+    flex-direction: column;
+    gap:0.5rem;
+    width: fit-content;
+    max-width: 20rem;
+    dt {
+        color: #a1a0a0;
+        font-size: 1.1rem;
+    }
+    dd {
+        color: #545454;
+        font-size: 1rem;
+    }
+
+}
+.property_wrapper__text {
+    max-width: 100%;
+    line-height: 1.5;
+}
+.content {
+    padding: 1rem 2rem 4rem 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    flex-direction: column;
+    height:55vh;
+}
+.nav_link {
+    text-decoration: none;
+   
+}
+.email {
+    font-weight: 300;
+    transition: 0.5s;
+    &:hover {
+        color: #5dc5ae;
+    }
+}
+.visit_accordion_summary{
+    font-size: 1rem;
+    font-weight: 400;
+    color: #545454;
+}
+.visits_list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 63vh;
+    max-height: 63vh;
+    width: 100%;
+
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #eae5e5 #f9f9f9;
+    li{
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    
+}
