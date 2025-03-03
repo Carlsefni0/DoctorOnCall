@@ -1,0 +1,64 @@
+﻿.header {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 6rem;
+    background: #088172;
+    border-top-right-radius: 1rem;
+    border-top-left-radius: 1rem;
+    position: relative;
+}
+.avatar_wrapper {
+    position: absolute;
+    top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+.email {
+    font-weight: 300;
+}
+.details_info {
+    padding-top: 6rem;
+    width: 100%;
+
+    flex-direction: column;
+}
+.info, .patient_info {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    /*flex-wrap: wrap;*/
+    gap: 2rem;
+
+    max-height: 38vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
+}
+
+.info::-webkit-scrollbar,
+.patient_info::-webkit-scrollbar {
+    display: none;
+}
+
+.property_wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 2rem 0.5rem 0;
+    
+    dt {
+        color: #a1a0a0;
+        font-size: 1.3rem;
+    }
+    dd{
+        color: #545454;
+        font-size: 1.1rem;
+
+    }
+    border-bottom: 1px solid lightgray;
+}

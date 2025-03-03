@@ -1,0 +1,25 @@
+﻿.header_container {
+    width: calc(100% - 5rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2.5rem 1.5rem 2.5rem;
+    height: 2vh;
+}
+.logo_container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color:#326976;
+    font-size: 1rem;
+    
+    img {
+        width: 2rem;
+    }
+}
+.email {
+    font-weight: 300;
+}
+.log_out {
+    color: red;
+}

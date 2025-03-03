@@ -1,0 +1,12 @@
+﻿.return_btn {
+    position: absolute;
+    background-color: transparent;
+    border: none;
+    top: 1rem;
+    left: 1rem;
+    cursor: pointer;
+    img {
+        width: 2.5rem;
+    }
+
+}

@@ -1,0 +1,16 @@
+﻿.data_item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    dt {
+        font-size: 2rem;
+        color: #68baa9;
+        text-shadow: 2px 2px 4px rgb(213, 208, 208)
+    }
+    dd {
+        color: #545454;
+        font-weight: 300;
+    }
+
+}

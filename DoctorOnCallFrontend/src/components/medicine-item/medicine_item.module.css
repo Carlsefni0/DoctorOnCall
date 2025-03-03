@@ -1,0 +1,59 @@
+﻿.medicine_item_container {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    width: 17rem;
+    height: 18rem;
+    border-top-right-radius: 0.5rem;
+    border-top-left-radius: 0.5rem;
+    border: 1px solid #d6d3d3;
+    align-items: center;
+    justify-content: space-between;
+}
+.img {
+    width: 8rem;
+    height: 8rem;
+    padding: 1rem;
+}
+.medicine_info {
+    background: #25AF9DFF;
+    width: calc(100% - 1rem);
+    height: 30%;
+    border-top-right-radius: 0.25rem;
+    border-top-left-radius: 0.25rem;
+    padding: 0.5rem;
+    padding-top: 1rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.medicine_title {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+.medicine_description {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 300;
+}
+.medicine_quantity {
+    position: absolute;
+    border-radius: 100%;
+    border: 1px solid lightgray;
+    width: 1.75rem;
+    height: 1.75rem;
+    right: -1rem;
+    top: -0.75rem;
+    background: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #545454;
+    
+}
+.medicine_price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    
+}
