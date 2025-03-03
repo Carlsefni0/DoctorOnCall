@@ -1,0 +1,69 @@
+﻿.forgot_page_container {
+    width: 100%;
+    height: 100vh;
+    background-image: url("../../assets/auth_background.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.forgot_wrapper {
+    width: 25%;
+    height: 40%;
+    background-color: rgb(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 0.5rem;
+    border: 1px solid white;
+    padding: 4rem;
+    h1 {
+        color: #68baa9;
+        font-size: 2.5rem;
+        text-align: center;
+        margin-top: 0;
+    }
+    h2 {
+        color: #000;
+        font-weight: 100;
+        width: 90%;
+    }
+    p {
+        text-align: center;
+        font-size: 1.25rem;
+    };
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+.form_wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+.nav_link {
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.8rem;
+    color: #3e8777;
+    &:hover {
+        color: #5dc5ae;
+    }
+}
+.btn {
+    width: 80%;
+    height: 3rem;
+    border-radius: 10px;
+    background-color: #7dd6c3;
+    border: 1px solid white;
+    color: white;
+    font-size: 1.2rem;
+    transition: 0.5s;
+    margin-top: 1.5rem;
+
+    &:hover {
+        background-color: #68baa9;
+        cursor: pointer;
+    }
+}
